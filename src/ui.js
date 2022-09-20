@@ -4,11 +4,18 @@ import $ from 'jquery';
 // Global variable declarations
 let fontsCluster = null;
 let searchInput = $('#search');
+let allFontsTab = $('.allFontsTab');
+let favoritesTab = $('.favoritesTab');
 let fontRowDiv = [];
 let cleanedFontList = [];
 let searchResults = [];
+let favorites = ["Helvetica", "Arapey", "Arsenal"];
 let detectIndex = 0;
 let detectLimit = 15;
+// console.log(figma.clientStorage);
+// figma.clientStorage.setAsync('favs', ['Arial, Helvetica']);
+// let favoritesFake = figma.clientStorage.getAsync('favs');
+// console.log(favoritesFake);
 
 // Fetching list of fonts from figma
 $(document).ready(() => {
@@ -115,8 +122,10 @@ searchInput.on('keyup', () => {
 // After debounce function
 const doneTyping = () => {
     searchCluster.update([]);
+    //save the search value
     const searchValue = searchInput.val().toLowerCase();
     if (searchValue.length > 2) {
+        //search results is all the divs where the name exists
         let searchResults = fontRowDiv.filter((font, index) =>  {
             let fontName = font.substring(font.indexOf(">") + 1, font.lastIndexOf("<"));
             if (fontName.toLowerCase().includes(searchValue) && detectFont(fontName)) {
@@ -143,6 +152,28 @@ const doneTyping = () => {
     }
 }
 
+const fetchFavorites = () => {
+    console.log(favorites);
+
+    //keep all the divs where fontName exists in another array named 'favorites[]'
+    let results = fontRowDiv.filter((font, index) =>  {
+        let fontName = font.substring(font.indexOf(">") + 1, font.lastIndexOf("<"));
+        return favorites.includes(fontName);
+    });
+    console.log(results);
+    if (results.length === 0) {
+        searchCluster.update([]);
+        $('#fonts-scroll-area').hide();
+        $('#seach-scroll-area').hide();
+        $('#empty-search').show();
+    } else {
+        searchCluster.update(results);
+        $('#empty-search').hide();
+        $('#fonts-scroll-area').hide();
+        $('#search-scroll-area').show();
+    }
+}
+
 $('#clear-search').on('click', function(e) {
     searchCluster.update([]);
     $('#empty-search').hide();
@@ -150,6 +181,30 @@ $('#clear-search').on('click', function(e) {
     $('#fonts-scroll-area').show();
     $('#search').val('');
 });
+
+
+allFontsTab.on('click', function(){
+    console.log("All Fonts Clicked");
+    selectTab(allFontsTab);
+    searchCluster.update([]);
+    $('#empty-search').hide();
+    $('#search-scroll-area').hide();
+    $('#fonts-scroll-area').show();
+    $('#search').val('');
+    $('.search-container').show();
+});
+
+favoritesTab.on('click', function(){
+    console.log("Favorites");
+    fetchFavorites();
+    selectTab(favoritesTab);
+    $('.search-container').hide();
+});
+
+const selectTab = (tab) => {
+    $('.tab').removeClass("selected");
+    tab.addClass('selected');
+}
 
 /* Figma returns bunch of unnecessary/weird system fonts that don't render in browser.
  * Hence this following font detection piece to eliminate those fonts
@@ -188,3 +243,4 @@ const detectFont = (font) =>{
     // console.log(font + " : " + detected);
     return detected;
 }
+
